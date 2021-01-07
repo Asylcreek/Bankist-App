@@ -47,10 +47,6 @@ const labelTimer = document.querySelector('.timer');
 const containerApp = document.querySelector('.app');
 const containerMovements = document.querySelector('.movements');
 
-const btnLogin = document.querySelector('.login__btn');
-const btnTransfer = document.querySelector('.form__btn--transfer');
-const btnLoan = document.querySelector('.form__btn--loan');
-const btnClose = document.querySelector('.form__btn--close');
 const btnSort = document.querySelector('.btn--sort');
 
 const inputLoginUsername = document.querySelector('.login__input--user');
@@ -64,6 +60,7 @@ const inputClosePin = document.querySelector('.form__input--pin');
 const loginForm = document.querySelector('.login');
 const transferForm = document.querySelector('.form--transfer');
 const closeForm = document.querySelector('.form--close');
+const loanForm = document.querySelector('.form--loan');
 
 const displayMovement = (movement, index) => {
     const type = movement < 0 ? 'withdrawal' : 'deposit';
@@ -77,11 +74,11 @@ const displayMovement = (movement, index) => {
         </div>`;
 };
 
-const displayMovements = (account) => {
+const displayMovements = (movements) => {
     //Clear any html already present
     containerMovements.innerHTML = '';
 
-    account.movements.forEach((el, i) =>
+    movements.forEach((el, i) =>
         containerMovements.insertAdjacentHTML('afterbegin', displayMovement(el, i))
     );
 };
@@ -124,7 +121,7 @@ const calcAndDisplaySummary = (account) => {
 
 const updateUI = (account) => {
     //Display movements
-    displayMovements(account);
+    displayMovements(account.movements);
 
     //Calculate and display balance
     calcAndDisplayBalance(account);
@@ -216,7 +213,7 @@ transferForm.addEventListener('submit', (e) => {
     inputTransferAmount.blur();
 });
 
-// Close transfer
+// Close account
 closeForm.addEventListener('submit', (e) => {
     //Prevent default form behaviour
     e.preventDefault();
@@ -253,4 +250,46 @@ closeForm.addEventListener('submit', (e) => {
     inputClosePin.blur();
 
     alert('Account was closed successfully');
+});
+
+//Loan
+loanForm.addEventListener('submit', (e) => {
+    //Prevent default form behaviour
+    e.preventDefault();
+
+    //Get amount
+    const loanAmount = Number(inputLoanAmount.value);
+
+    //Check if there is a loan amount and it is not less than 0
+    if (!loanAmount || loanAmount < 0)
+        return alert('Please enter a valid amount and try again.');
+
+    //Check if amount meets loan conditions
+    const approved = loggedInUser.movements.some((el) => el >= loanAmount * 0.1);
+
+    //Approve loan
+    if (approved) loggedInUser.movements.push(loanAmount);
+    else return alert('Your loan was not approved.');
+
+    //Clear input and remove focus
+    inputLoanAmount.value = '';
+    inputLoanAmount.blur();
+
+    //Update UI
+    updateUI(loggedInUser);
+});
+
+//Sorting
+let sorted = false;
+let movements;
+btnSort.addEventListener('click', () => {
+    if (!sorted) {
+        movements = [...loggedInUser.movements].sort((a, b) => a - b);
+        sorted = true;
+    } else {
+        movements = [...loggedInUser.movements];
+        sorted = false;
+    }
+
+    displayMovements(movements);
 });
